@@ -1,0 +1,46 @@
+#include <SD.h>
+#include <SoftwareSerial.h>
+#include "dht.h"
+
+SoftwareSerial bt(8, 9); // RX, TX
+dht DHT;
+const int chipSelect = 10;
+
+void setup() {
+  Serial.begin(9600);
+  bt.begin(9600);
+  Serial.println("Ready");
+
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Error al inicializar la tarjeta SD.");
+    return;
+  }
+  Serial.println("Tarjeta SD inicializada correctamente.");
+}
+
+void loop() {
+  int readData = DHT.read11(A0);
+
+  double hum = DHT.humidity;
+  double temp = DHT.temperature;
+
+  bt.print(temp); // enviar temperatura a la aplicación MIT
+  bt.print(";");
+  bt.print(hum); // enviar humedad a la aplicación MIT
+  bt.println(";");
+
+  delay(1000);
+
+  File dataFile = SD.open("datos.txt", FILE_WRITE);
+  if (dataFile) {
+    dataFile.print("Temperatura: ");
+    dataFile.print(temp);
+    dataFile.print(" °C, Humedad: ");
+    dataFile.print(hum);
+    dataFile.println(" %");
+    dataFile.close();
+    Serial.println("Datos guardados correctamente en la tarjeta SD.");
+  } else {
+    Serial.println("Error al abrir el archivo en la tarjeta SD.");
+  }
+}
